@@ -9,10 +9,13 @@ from ultralytics import YOLO
 try:
     from src.config_loader import load_config
     from src.models.yolov8_cifr import YOLOv8WithCIFR
+    from src.engine.unfreeze_schedule import apply_finetune_strategy
 except ModuleNotFoundError:
     sys.path.append(str(Path(__file__).resolve().parent.parent))
     from src.config_loader import load_config
     from src.models.yolov8_cifr import YOLOv8WithCIFR
+    from src.engine.unfreeze_schedule import apply_finetune_strategy
+
 
 
 def fix_dataset_yaml_path(yaml_path: Path) -> Path:
@@ -119,6 +122,11 @@ def main():
                 weighting_scheme=weighting_scheme,
             )
             print("Successfully initialized YOLOv8WithCIFR model.")
+            try:
+                total_layers = len(model.model.model)
+            except Exception:
+                total_layers = 23
+            freeze_layers = apply_finetune_strategy(model, config, total_layers=total_layers)
             model.train_yolo(
                 data=str(temp_data_path),
                 epochs=epochs,
@@ -127,10 +135,16 @@ def main():
                 device=device,
                 project="runs/detect",
                 name=run_name,
+                freeze=freeze_layers,
             )
         else:
             model = YOLO(model_variant)
             print("Successfully initialized plain YOLO model.")
+            try:
+                total_layers = len(model.model.model)
+            except Exception:
+                total_layers = 23
+            freeze_layers = apply_finetune_strategy(model, config, total_layers=total_layers)
             model.train(
                 data=str(temp_data_path),
                 epochs=epochs,
@@ -139,7 +153,10 @@ def main():
                 device=device,
                 project="runs/detect",
                 name=run_name,
+                freeze=freeze_layers,
             )
+
+
     except FileNotFoundError as e:
         print(f"\n[ERROR] Training failed due to missing file: {e}")
         sys.exit(1)

@@ -1,7 +1,7 @@
 import math
 from typing import Callable, List, Dict, Any
 
-DEFAULT_TOTAL_LAYERS = 23  # Standard YOLOv8 layer count (0..22)
+DEFAULT_TOTAL_LAYERS = 23  # Standard YOLOv8m layer count (indices 0..22)
 
 
 def get_freeze_layers(strategy: str, total_layers: int = DEFAULT_TOTAL_LAYERS) -> List[int]:
@@ -21,8 +21,8 @@ def get_freeze_layers(strategy: str, total_layers: int = DEFAULT_TOTAL_LAYERS) -
         # Freeze all but the last 3 layers (backbone stays frozen, neck+head trainable)
         return list(range(0, max(0, total_layers - 3)))
     elif strategy == "gradual_unfreeze":
-        # Freeze everything initially
-        return list(range(0, total_layers))
+        # Never freeze the detection head; freeze only up to (not including) the last 2 layers
+        return list(range(0, max(0, total_layers - 2)))
     else:
         print(f"[Warning] Unknown finetune strategy '{strategy}'. Defaulting to full_finetune (no freeze).")
         return []
@@ -120,13 +120,14 @@ if __name__ == "__main__":
         }
     }
 
-    # 1. Test get_freeze_layers
-    freeze_list = get_freeze_layers("gradual_unfreeze", total_layers=10)
-    print(f"Initial freeze layers for gradual_unfreeze (total_layers=10): {freeze_list}")
-    assert freeze_list == list(range(10)), "Expected all 10 layers to be frozen initially!"
+    # 1. Test get_freeze_layers with default total_layers=23
+    freeze_list = get_freeze_layers("gradual_unfreeze", total_layers=23)
+    print(f"Initial freeze layers for gradual_unfreeze (total_layers=23): {freeze_list}")
+    assert freeze_list == list(range(21)), f"Expected layers 0..20 frozen initially, got {freeze_list}"
+    assert 21 not in freeze_list and 22 not in freeze_list, "Head layers (21, 22) must not be frozen!"
 
     # 2. Test callback creation and simulation
-    callback = make_unfreeze_callback(unfreeze_schedule=[10, 20, 30], total_layers=10)
+    callback = make_unfreeze_callback(unfreeze_schedule=[10, 20, 30], total_layers=23)
 
     # Mock parameter object
     class DummyParam:
@@ -139,7 +140,7 @@ if __name__ == "__main__":
         def __init__(self):
             self._params = {
                 f"model.{i}.conv.weight": DummyParam(f"model.{i}.conv.weight")
-                for i in range(10)
+                for i in range(23)
             }
 
         def named_parameters(self):
