@@ -1,1 +1,24 @@
-# Base configuration
+project: "floating-litter-cifr"
+seed: 42
+
+data:
+  root: "./data"
+  fml_yaml: "./data/fml/data.yaml"
+  eightclass_yaml: "./data/eightclass/data.yaml"
+
+model:
+  base: "yolov8m"
+  img_size: 640
+  use_cifr: false
+
+train:
+  epochs: 150
+  batch_size: 24
+  optimizer: "AdamW"
+  lr0: 0.001
+  device: 0
+
+logging:
+  wandb_project: "floating-litter-cifr"
+  wandb_entity: "yaminipriyamr-vellore-institute-of-technology"
+  log_per_class_ap: true
