@@ -218,7 +218,16 @@ __marimo__/
 .streamlit/secrets.toml
 
 # Project-specific ignores
-data/
+data/*
+!data/fml/
+data/fml/*
+!data/fml/data.yaml
+!data/eightclass/
+data/eightclass/*
+!data/eightclass/datasets/
+data/eightclass/datasets/*
+!data/eightclass/datasets/RFT.yaml
+
 checkpoints/
 runs/
 *.pt

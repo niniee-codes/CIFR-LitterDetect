@@ -1,0 +1,7 @@
+path: .
+train: RFT/images/train
+val: RFT/images/val
+test: RFT/images/test
+
+nc: 8
+names: ['bottle', 'grass', 'branch', 'milk-box', 'plastic-bag', 'plastic-garbage', 'ball', 'leaf']
