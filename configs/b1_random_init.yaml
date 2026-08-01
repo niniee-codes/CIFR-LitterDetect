@@ -1,1 +1,13 @@
-# Baseline 1: Random initialization config
+defaults: base.yaml
+run_name: "B1_random_init_baseline"
+data:
+  target: eightclass_yaml_path
+  eightclass_yaml_path: "data/eightclass/datasets/RFT.yaml"
+model:
+  use_cifr: false
+  pretrained_backbone: null
+train:
+  finetune_strategy: "full_finetune"
+  device: 0
+wandb:
+  tags: ["baseline", "phase1", "random-init"]

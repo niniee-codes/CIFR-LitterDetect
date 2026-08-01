@@ -1,1 +1,13 @@
-# Baseline 3: COCO pre-training config
+defaults: base.yaml
+run_name: "B3_coco_baseline"
+data:
+  target: eightclass_yaml_path
+  eightclass_yaml_path: "data/eightclass/datasets/RFT.yaml"
+model:
+  use_cifr: false
+  pretrained_backbone: "coco"
+train:
+  finetune_strategy: "full_finetune"
+  device: 0
+wandb:
+  tags: ["baseline", "phase1", "coco"]

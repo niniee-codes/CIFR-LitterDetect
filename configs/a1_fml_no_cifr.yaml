@@ -1,1 +1,14 @@
-# Ablation 1: FML without CIFR config
+defaults: base.yaml
+run_name: "A1_fml_pretrain_no_cifr"
+data:
+  target: eightclass_yaml_path
+  eightclass_yaml_path: "data/eightclass/datasets/RFT.yaml"
+model:
+  use_cifr: false
+  pretrained_backbone: "./checkpoints/phase2_fml_pretrained_backbone.pt"
+train:
+  finetune_strategy: "gradual_unfreeze"
+  unfreeze_schedule: [10, 20, 30]
+  device: 0
+wandb:
+  tags: ["phase4c", "ablation", "fml-pretrain-only"]

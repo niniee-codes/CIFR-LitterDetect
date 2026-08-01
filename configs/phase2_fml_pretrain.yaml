@@ -1,1 +1,13 @@
-# Phase 2: FML pre-training config
+defaults: base.yaml
+run_name: "Phase2_FML_Pretrain"
+data:
+  target: fml_yaml
+model:
+  use_cifr: false
+  base: "yolov8m"
+train:
+  epochs: 150
+  finetune_strategy: "full_finetune"
+  device: 0
+wandb:
+  tags: ["phase2", "fml-pretrain", "single-class"]

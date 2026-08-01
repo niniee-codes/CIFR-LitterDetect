@@ -1,1 +1,14 @@
-# Strategy 2: Frozen backbone config
+defaults: base.yaml
+run_name: "S2_frozen_backbone"
+data:
+  target: eightclass_yaml_path
+  eightclass_yaml_path: "data/eightclass/datasets/RFT.yaml"
+model:
+  use_cifr: true
+  cifr_weighting: "inv_sqrt_freq"
+  pretrained_backbone: "./checkpoints/phase2_fml_pretrained_backbone.pt"
+train:
+  finetune_strategy: "frozen_backbone"
+  device: 0
+wandb:
+  tags: ["phase4b", "transfer-strategy", "frozen-backbone"]

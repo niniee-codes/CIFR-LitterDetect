@@ -1,1 +1,13 @@
-# Baseline 2: ImageNet pre-training config
+defaults: base.yaml
+run_name: "B2_imagenet_baseline"
+data:
+  target: eightclass_yaml_path
+  eightclass_yaml_path: "data/eightclass/datasets/RFT.yaml"
+model:
+  use_cifr: false
+  pretrained_backbone: "imagenet"
+train:
+  finetune_strategy: "full_finetune"
+  device: 0
+wandb:
+  tags: ["baseline", "phase1", "imagenet"]

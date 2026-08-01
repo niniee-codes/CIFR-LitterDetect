@@ -1,1 +1,15 @@
-# Model 2: ImageNet + CIFR config
+defaults: base.yaml
+run_name: "M2_imagenet_cifr"
+data:
+  target: eightclass_yaml_path
+  eightclass_yaml_path: "data/eightclass/datasets/RFT.yaml"
+model:
+  use_cifr: true
+  cifr_weighting: "inv_sqrt_freq"
+  pretrained_backbone: "imagenet"
+train:
+  finetune_strategy: "gradual_unfreeze"
+  unfreeze_schedule: [10, 20, 30]
+  device: 0
+wandb:
+  tags: ["main-result", "phase4", "imagenet", "cifr"]

@@ -1,1 +1,14 @@
-# Strategy 1: Full fine-tuning config
+defaults: base.yaml
+run_name: "S1_full_finetune"
+data:
+  target: eightclass_yaml_path
+  eightclass_yaml_path: "data/eightclass/datasets/RFT.yaml"
+model:
+  use_cifr: true
+  cifr_weighting: "inv_sqrt_freq"
+  pretrained_backbone: "./checkpoints/phase2_fml_pretrained_backbone.pt"
+train:
+  finetune_strategy: "full_finetune"
+  device: 0
+wandb:
+  tags: ["phase4b", "transfer-strategy", "full-finetune"]
