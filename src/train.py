@@ -10,12 +10,13 @@ try:
     from src.config_loader import load_config
     from src.models.yolov8_cifr import YOLOv8WithCIFR
     from src.engine.unfreeze_schedule import apply_finetune_strategy
+    from src.utils.wandb_logger import init_wandb, get_ultralytics_wandb_callback, finish_wandb
 except ModuleNotFoundError:
     sys.path.append(str(Path(__file__).resolve().parent.parent))
     from src.config_loader import load_config
     from src.models.yolov8_cifr import YOLOv8WithCIFR
     from src.engine.unfreeze_schedule import apply_finetune_strategy
-
+    from src.utils.wandb_logger import init_wandb, get_ultralytics_wandb_callback, finish_wandb
 
 
 def fix_dataset_yaml_path(yaml_path: Path) -> Path:
@@ -63,6 +64,9 @@ def main():
 
     config = load_config(config_path)
 
+    # Initialize Weights & Biases run
+    wandb_run = init_wandb(config)
+
     # Resolve model base name
     model_base = config["model"]["base"]
     model_variant = model_base if model_base.endswith(".pt") else f"{model_base}.pt"
@@ -107,6 +111,7 @@ def main():
     if not data_path.exists():
         print(f"[ERROR] Dataset configuration file does not exist: {data_path}")
         print("Please check your dataset path configuration.")
+        finish_wandb(wandb_run)
         sys.exit(1)
 
     # Dynamically fix dataset yaml 'path' field to absolute parent path at runtime
@@ -127,6 +132,12 @@ def main():
             except Exception:
                 total_layers = 23
             freeze_layers = apply_finetune_strategy(model, config, total_layers=total_layers)
+
+            # Register W&B logging callback
+            wandb_callbacks = get_ultralytics_wandb_callback(wandb_run)
+            if "on_fit_epoch_end" in wandb_callbacks and hasattr(model.yolo, "add_callback"):
+                model.yolo.add_callback("on_fit_epoch_end", wandb_callbacks["on_fit_epoch_end"])
+
             model.train_yolo(
                 data=str(temp_data_path),
                 epochs=epochs,
@@ -145,6 +156,12 @@ def main():
             except Exception:
                 total_layers = 23
             freeze_layers = apply_finetune_strategy(model, config, total_layers=total_layers)
+
+            # Register W&B logging callback
+            wandb_callbacks = get_ultralytics_wandb_callback(wandb_run)
+            if "on_fit_epoch_end" in wandb_callbacks and hasattr(model, "add_callback"):
+                model.add_callback("on_fit_epoch_end", wandb_callbacks["on_fit_epoch_end"])
+
             model.train(
                 data=str(temp_data_path),
                 epochs=epochs,
@@ -156,13 +173,14 @@ def main():
                 freeze=freeze_layers,
             )
 
-
     except FileNotFoundError as e:
         print(f"\n[ERROR] Training failed due to missing file: {e}")
         sys.exit(1)
     except Exception as e:
         print(f"\n[ERROR] An error occurred during training: {e}")
         sys.exit(1)
+    finally:
+        finish_wandb(wandb_run)
 
 
 if __name__ == "__main__":
