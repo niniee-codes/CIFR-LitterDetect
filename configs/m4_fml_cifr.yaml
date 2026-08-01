@@ -3,7 +3,10 @@ defaults: base.yaml
 run_name: "M4_fml_pretrain_cifr"
 
 data:
-  target: eightclass_yaml
+  target: eightclass_yaml_path
+  eightclass_yaml_path: "data/eightclass/datasets/RFT.yaml"
+
+
 
 model:
   use_cifr: true

@@ -1,1 +1,1 @@
-# src package initialization
+"""CIFR-LitterDetect package."""
