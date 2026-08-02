@@ -49,6 +49,9 @@ class CIFRBlock(nn.Module):
         # Learnable scalar scaling frequency prior influence
         self.prior_strength = nn.Parameter(torch.tensor(1.0))
 
+    _warned_attn_clamp = False
+    _warned_prior_strength_clamp = False
+
     def get_prior_bias(self) -> torch.Tensor:
         if self.prior_proj is not None:
             return self.prior_proj(self.class_weights)
@@ -64,7 +67,31 @@ class CIFRBlock(nn.Module):
 
         # 3. Frequency-prior bias addition scaled by learnable prior_strength
         prior_bias = self.get_prior_bias().unsqueeze(0)  # Shape (1, C)
-        raw_attn = raw_attn + self.prior_strength * prior_bias
+
+        # Safeguard 2: Constrain prior_strength to a safe range [0.1, 3.0]
+        if not CIFRBlock._warned_prior_strength_clamp and (
+            self.prior_strength.item() < 0.1 or self.prior_strength.item() > 3.0
+        ):
+            print(
+                f"[WARNING] [CIFRBlock] prior_strength ({self.prior_strength.item():.4f}) "
+                f"was outside safe range [0.1, 3.0] and was clamped."
+            )
+            CIFRBlock._warned_prior_strength_clamp = True
+
+        clamped_prior_strength = torch.clamp(self.prior_strength, min=0.1, max=3.0)
+        raw_attn = raw_attn + clamped_prior_strength * prior_bias
+
+        # Safeguard 1: Clamp raw attention scores to safe range [-10.0, 10.0] before sigmoid
+        if not CIFRBlock._warned_attn_clamp and (
+            (raw_attn < -10.0).any() or (raw_attn > 10.0).any()
+        ):
+            print(
+                f"[WARNING] [CIFRBlock] Raw attention scores were outside safe range [-10.0, 10.0] "
+                f"(min={raw_attn.min().item():.4f}, max={raw_attn.max().item():.4f}) and were clamped."
+            )
+            CIFRBlock._warned_attn_clamp = True
+
+        raw_attn = torch.clamp(raw_attn, min=-10.0, max=10.0)
 
         # 4. Sigmoid excitation & Recalibration
         attn_weights = torch.sigmoid(raw_attn).view(b, c, 1, 1)

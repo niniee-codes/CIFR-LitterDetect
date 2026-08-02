@@ -93,6 +93,8 @@ def main():
     batch_size = 2 if args.debug else config["train"].get("batch_size", 16)
     device = config["train"].get("device", 0)
     img_size = config["model"].get("img_size", 640)
+    lr0 = config["train"].get("lr0", 0.01)
+    optimizer = config["train"].get("optimizer", "auto")
 
     # Print summary before training starts
     print("\n==================================================")
@@ -108,6 +110,8 @@ def main():
     print(f"  Batch Size    : {batch_size}")
     print(f"  Image Size    : {img_size}")
     print(f"  Device        : {device}")
+    print(f"  Optimizer     : {optimizer}")
+    print(f"  Initial LR    : {lr0}")
     print("==================================================\n")
 
     if not data_path.exists():
@@ -149,6 +153,9 @@ def main():
                 project="runs/detect",
                 name=run_name,
                 freeze=freeze_layers,
+                patience=50,
+                lr0=config["train"].get("lr0", 0.01),
+                optimizer=config["train"].get("optimizer", "auto"),
             )
         else:
             model = YOLO(model_variant)
@@ -173,6 +180,9 @@ def main():
                 project="runs/detect",
                 name=run_name,
                 freeze=freeze_layers,
+                patience=50,
+                lr0=config["train"].get("lr0", 0.01),
+                optimizer=config["train"].get("optimizer", "auto"),
             )
 
         # Checkpoint saving for FML pretrain phase

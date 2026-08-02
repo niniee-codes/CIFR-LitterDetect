@@ -15,7 +15,7 @@ model:
 
 train:
   finetune_strategy: "gradual_unfreeze"
-  unfreeze_schedule: [10, 20, 30]
+  unfreeze_schedule: [15, 30, 45]
   device: 0
 
 wandb:
