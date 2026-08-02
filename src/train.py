@@ -1,4 +1,6 @@
 import argparse
+import glob
+import shutil
 import sys
 import tempfile
 from pathlib import Path
@@ -89,7 +91,7 @@ def main():
 
     epochs = 1 if args.debug else config["train"].get("epochs", 100)
     batch_size = 2 if args.debug else config["train"].get("batch_size", 16)
-    device = "cpu" if args.debug else config["train"].get("device", 0)
+    device = config["train"].get("device", 0)
     img_size = config["model"].get("img_size", 640)
 
     # Print summary before training starts
@@ -172,6 +174,33 @@ def main():
                 name=run_name,
                 freeze=freeze_layers,
             )
+
+        # Checkpoint saving for FML pretrain phase
+        if config["data"].get("target") == "fml_yaml":
+            weights_path = Path("runs/detect") / run_name / "weights" / "best.pt"
+            if not weights_path.exists():
+                matching_dirs = sorted(
+                    [d for d in Path("runs/detect").glob(f"{run_name}*") if d.is_dir()],
+                    key=lambda p: p.stat().st_mtime,
+                    reverse=True,
+                )
+                for d in matching_dirs:
+                    candidate = d / "weights" / "best.pt"
+                    if candidate.exists():
+                        weights_path = candidate
+                        break
+
+            if weights_path.exists():
+                checkpoints_dir = Path("checkpoints")
+                checkpoints_dir.mkdir(exist_ok=True)
+                dest_file = checkpoints_dir / "phase2_fml_pretrained_backbone.pt"
+                shutil.copy2(weights_path, dest_file)
+                print(f"[Checkpoint] Saved FML pretrained backbone to {dest_file}")
+            else:
+                print(
+                    f"[WARNING] Could not locate best weights file for run '{run_name}'. "
+                    "Please manually locate best.pt in runs/detect/ and copy it to checkpoints/phase2_fml_pretrained_backbone.pt."
+                )
 
     except FileNotFoundError as e:
         print(f"\n[ERROR] Training failed due to missing file: {e}")
